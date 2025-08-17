@@ -42,19 +42,19 @@ bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(func=lambda message: True)
 def save_message_to_file(message):
-if message.text:
-try:
-with open("message.txt", "w", encoding="utf-8") as file:
-file.write(message.text)
-bot.send_message(message.chat.id, "Message saved to file.")
-except Exception as e:
-bot.send_message(message.chat.id, f"Error saving message: {str(e)}")
-else:
-bot.send_message(message.chat.id, "Only text messages are supported.")
+    if message.text:
+        try:
+            with open("message.txt", "w", encoding="utf-8") as file:
+                file.write(message.text)
+            bot.send_message(message.chat.id, "Message saved to file.")
+        except Exception as e:
+            bot.send_message(message.chat.id, f"Error saving message: {str(e)}")
+    else:
+        bot.send_message(message.chat.id, "Only text messages are supported.")
 
 if __name__ == "__main__":
-print("Bot is running...")
-bot.infinity_polling()
+    print("Bot is running...")
+    bot.infinity_polling()
 ```
 #### **File Path**
 ```
