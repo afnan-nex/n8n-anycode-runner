@@ -210,7 +210,7 @@ bot = telebot.TeleBot(TOKEN)
         </div>
         
         <div class="form-group">
-            <label for="pathInput">📁 File Path + Name + Extension:</label>
+            <label for="pathInput">📂 File Path + Name + Extension:</label>
             <input type="text" id="pathInput" placeholder="C:\Users\Admin\Downloads\script.py" />
         </div>
         
@@ -266,17 +266,16 @@ bot = telebot.TeleBot(TOKEN)
         }
         
         function escapeForCmd(text) {
-            // Improved escaping for CMD special characters
+            // Fixed escaping for CMD special characters
             if (!text) return '.';
             return text
-                .replace(/%/g, '%%')      // Escape percent
+                .replace(/%/g, '%%')      // Escape percent first
                 .replace(/&/g, '^&')      // Escape ampersand
                 .replace(/\|/g, '^|')     // Escape pipe
                 .replace(/</g, '^<')      // Escape less than
                 .replace(/>/g, '^>')      // Escape greater than
-                .replace(/\\/g, '^\\')    // Escape backslash
-                .replace(/\^/g, '^^')     // Escape caret
-                .replace(/"/g, '^"');     // Escape quotes with caret for CMD
+                .replace(/"/g, '""')      // Escape quotes by doubling them
+                .replace(/\^/g, '^^');    // Escape caret last
         }
         
         function copyToClipboard() {
