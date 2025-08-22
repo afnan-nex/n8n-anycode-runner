@@ -1,366 +1,374 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code to Any File Creator by cmd</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-        }
-        
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .form-group {
-            margin-bottom: 25px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-            font-size: 1.1em;
-        }
-        
-        textarea, input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 12px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.9);
-        }
-        
-        textarea:focus, input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-            transform: translateY(-2px);
-        }
-        
-        textarea {
-            resize: vertical;
-            min-height: 200px;
-        }
-        
-        #output {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            min-height: 150px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        
-        .button-group {
-            text-align: center;
-            margin: 30px 0;
-        }
-        
-        button {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin: 0 10px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-        
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-        
-        button:active {
-            transform: translateY(-1px);
-        }
-        
-        .copy-btn {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-        }
-        
-        .copy-btn:hover {
-            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
-        }
-        
-        .clear-btn {
-            background: linear-gradient(135deg, #dc3545, #e83e8c);
-            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
-        }
-        
-        .clear-btn:hover {
-            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
-        }
-        
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #28a745;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            opacity: 0;
-            transform: translateX(100%);
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-        
-        .toast.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        
-        .example {
-            background: rgba(102, 126, 234, 0.1);
-            border-left: 4px solid #667eea;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 8px;
-        }
-        
-        .example h3 {
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-        
-        .example code {
-            background: rgba(0, 0, 0, 0.05);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'Consolas', 'Monaco', monospace;
-        }
-        
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-                margin: 10px;
-            }
-            
-            h1 {
-                font-size: 2em;
-            }
-            
-            button {
-                display: block;
-                width: 100%;
-                margin: 10px 0;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Code to Any File Creator by CMD</title>
+  <style>
+    :root {
+      --primary: linear-gradient(135deg, #6e8efb, #a777e3);
+      --dark: #1e1e2e;
+      --light: #f8f9fa;
+      --gray: #d1d5db;
+      --success: #4ade80;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--primary);
+      color: var(--dark);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      overflow: hidden;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      color: var(--dark);
+    }
+
+    p {
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: var(--dark);
+    }
+
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--gray);
+      border-radius: 8px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.95rem;
+      transition: border 0.3s;
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    textarea:focus, input:focus {
+      outline: none;
+      border-color: #6e8efb;
+    }
+
+    .output-container {
+      position: relative;
+      margin-top: 16px;
+    }
+
+    #output {
+      background: var(--dark);
+      color: var(--light);
+      font-family: 'Consolas', monospace;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-all;
+      min-height: 80px;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #333;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      opacity: 0.9;
+      transition: opacity 0.3s, background 0.3s;
+    }
+
+    .copy-btn:hover {
+      opacity: 1;
+      background: #555;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+      font-size: 0.95rem;
+      flex: 1;
+      min-width: 100px;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .clear-btn {
+      background: #ef4444;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--success);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+
+    @media (max-width: 600px) {
+      .btn-group {
+        flex-direction: column;
+      }
+      button {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🚀 Code to Any File Creator by cmd</h1>
-		<h2>For generating script everytime(new) for/with variables in n8n</h2>
-        
-        <div class="example">
-            <h3>📋 How to use:</h3>
-            <p>1. Paste your code in the first box</p>
-            <p>2. Enter the full path with filename and extension (e.g., <code>C:\Users\Admin\Downloads\script.py</code>)</p>
-            <p>3. Click "Generate CMD Command" to get the output</p>
-            <p>4. Copy and use the command in your n8n workflow!</p>
-            <p>5. My <a href="https://www.instagram.com/afnan_nex" target="_blank">Insta</a> & <a href="https://github.com/afnan-nex" target="_blank">Github</a></p>
-        </div>
-        
-        <div class="form-group">
-            <label for="codeInput">📝 Your Code:</label>
-            <textarea id="codeInput" placeholder='Enter your code here, for example:
-import telebot
-TOKEN = "YOUR_BOT_TOKEN_HERE"
-bot = telebot.TeleBot(TOKEN)
-...'></textarea>
-        </div>
-        
-        <div class="form-group">
-            <label for="pathInput">📂 File Path + Name + Extension:</label>
-            <input type="text" id="pathInput" placeholder="C:\Users\Admin\Downloads\script.py" />
-        </div>
-        
-        <div class="button-group">
-            <button onclick="generateCommand()">⚡ Generate CMD Command</button>
-            <button class="copy-btn" onclick="copyToClipboard()">📋 Copy Output</button>
-            <button class="clear-btn" onclick="clearAll()">🗑️ Clear All</button>
-        </div>
-        
-        <div class="form-group">
-            <label for="output">💻 CMD Command Output:</label>
-            <textarea id="output" readonly placeholder="Your CMD command will appear here..."></textarea>
-        </div>
-    </div>
-    
-    <div id="toast" class="toast">
-        Copied to clipboard! 🎉
+
+  <div class="container">
+    <header>
+      <h1>Code to Any File Creator by CMD</h1>
+      <p>Paste your code and file path to generate a CMD command for n8n automation.</p>
+    </header>
+
+    <div class="form-group">
+      <label for="code">Code Snippet</label>
+      <textarea id="code" placeholder="Paste your Python, JS, CMD, or any code here..."></textarea>
     </div>
 
-    <script>
-        function generateCommand() {
-            const code = document.getElementById('codeInput').value;
-            const path = document.getElementById('pathInput').value;
-            
-            if (!code.trim()) {
-                alert('Please enter some code!');
-                return;
-            }
-            
-            if (!path.trim()) {
-                alert('Please enter the file path!');
-                return;
-            }
-            
-            const lines = code.split('\n').map(line => line.trimEnd());
-            let command = '';
-            
-            // First line uses > to create/overwrite the file
-            if (lines.length > 0) {
-                command += `echo ${escapeForCmd(lines[0])}> "${path}"`;
-            }
-            
-            // Subsequent lines use >> to append
-            for (let i = 1; i < lines.length; i++) {
-                if (lines[i].trim()) {
-                    command += ` & echo ${escapeForCmd(lines[i])}>> "${path}"`;
-                } else {
-                    command += ` & echo.>> "${path}"`;
-                }
-            }
-            
-            document.getElementById('output').value = command;
+    <div class="form-group">
+      <label for="path">Full File Path (e.g., C:\scripts\app.py)</label>
+      <input type="text" id="path" placeholder="C:\folder\file.ext" />
+    </div>
+
+    <div class="form-group">
+      <label for="output">Generated CMD Command</label>
+      <div class="output-container">
+        <button class="copy-btn" onclick="copyCommand()">Copy</button>
+        <div id="output">CMD command will appear here...</div>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button onclick="generateCommand()">Generate CMD Command</button>
+      <button class="clear-btn" onclick="clearAll()">Clear All</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">Copied to clipboard!</div>
+
+  <script>
+    // Auto-generate on input
+    document.getElementById('code').addEventListener('input', generateCommand);
+    document.getElementById('path').addEventListener('input', generateCommand);
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      // Ctrl + Enter → Generate
+      if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        generateCommand();
+      }
+    });
+
+    // Allow Ctrl+C in output
+    document.getElementById('output').addEventListener('keydown', function(e) {
+      if (e.ctrlKey && e.key === 'c') {
+        copyCommand();
+        e.preventDefault();
+      }
+    }, true);
+
+    // Make output selectable
+    const outputEl = document.getElementById('output');
+    outputEl.setAttribute('contenteditable', 'false');
+    outputEl.style.userSelect = 'text';
+
+    // Load example on page load
+    window.onload = function() {
+      document.getElementById('code').value = `from mutagen.mp3 import MP3
+import os
+
+# Path to your audio file
+audio_path = r"C:/YouTube/audio.mp3"
+
+# Load the audio file
+audio = MP3(audio_path)
+
+# Get duration in seconds
+duration_seconds = int(audio.info.length)
+
+# Convert into minutes:seconds format
+minutes = duration_seconds // 60
+seconds = duration_seconds % 60
+duration_text = f"{minutes}:{seconds:02d}"
+
+# Path for the text file (same directory as audio file)
+output_path = os.path.join(os.path.dirname(audio_path), "audioduration.txt")
+
+# Write duration to text file
+with open(output_path, "w") as f:
+    f.write(duration_text)
+
+print(f"Audio duration saved to {output_path}")`;
+
+      document.getElementById('path').value = 'C:\\YouTube\\get_duration.py';
+      generateCommand();
+    };
+
+    function generateCommand() {
+      const code = document.getElementById('code').value;
+      const rawPath = document.getElementById('path').value.trim();
+      const outputEl = document.getElementById('output');
+
+      if (!code || !rawPath) {
+        outputEl.textContent = 'Enter code and file path to generate command...';
+        return;
+      }
+
+      // Normalize path: ensure backslashes are correct
+      const path = rawPath.replace(/\\/g, '\\\\');
+
+      const lines = code.split('\n');
+      const parts = [];
+
+      lines.forEach((line, index) => {
+        let cmdPart;
+
+        // Handle empty lines
+        if (line.trim() === '') {
+          cmdPart = 'echo.';
+        } else {
+          // Step 1: Escape %VAR% style environment variables only
+          let escaped = line.replace(/%([a-zA-Z0-9_]+)%/g, '%%$1%%');
+
+          // Step 2: Escape other CMD special characters
+          escaped = escaped
+            .replace(/&/g, '^&')
+            .replace(/</g, '^<')
+            .replace(/>/g, '^>')
+            .replace(/\|/g, '^|')
+            .replace(/\^/g, '^^');
+
+          // Build echo command
+          cmdPart = `echo ${escaped}`;
         }
-        
-        function escapeForCmd(text) {
-            // Fixed escaping for CMD special characters
-            if (!text) return '.';
-            return text
-                .replace(/%/g, '%%')      // Escape percent first
-                .replace(/&/g, '^&')      // Escape ampersand
-                .replace(/\|/g, '^|')     // Escape pipe
-                .replace(/</g, '^<')      // Escape less than
-                .replace(/>/g, '^>')      // Escape greater than
-                .replace(/"/g, '""')      // Escape quotes by doubling them
-                .replace(/\^/g, '^^');    // Escape caret last
-        }
-        
-        function copyToClipboard() {
-            const output = document.getElementById('output');
-            if (!output.value.trim()) {
-                alert('Nothing to copy! Generate a command first.');
-                return;
-            }
-            
-            output.select();
-            output.setSelectionRange(0, 99999); // For mobile devices
-            
-            try {
-                document.execCommand('copy');
-                showToast();
-            } catch (err) {
-                alert('Failed to copy to clipboard');
-            }
-        }
-        
-        function clearAll() {
-            document.getElementById('codeInput').value = '';
-            document.getElementById('pathInput').value = '';
-            document.getElementById('output').value = '';
-        }
-        
-        function showToast() {
-            const toast = document.getElementById('toast');
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-        
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
-        
-        // Auto-generate on input change
-        document.getElementById('codeInput').addEventListener('input', debounce(generateCommand, 500));
-        document.getElementById('pathInput').addEventListener('input', debounce(generateCommand, 500));
-        
-        // Add keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'Enter') {
-                generateCommand();
-            } else if (e.ctrlKey && e.key === 'c' && e.target.id === 'output') {
-                copyToClipboard();
-            }
+
+        // First line: use >, rest: >>
+        cmdPart += index === 0 ? ` > "${path}"` : ` >> "${path}"`;
+        parts.push(cmdPart);
+      });
+
+      // Join all with ` & ` (not &&) for sequential execution
+      const finalCommand = parts.join(' & ');
+      outputEl.textContent = finalCommand;
+    }
+
+    function copyCommand() {
+      const outputEl = document.getElementById('output');
+      const text = outputEl.textContent;
+
+      if (!text || text.includes('Enter code')) return;
+
+      // Use modern Clipboard API if available (more reliable)
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast();
+        }).catch(err => {
+          fallbackCopy(text);
         });
-        
-        // Load example on page load
-        window.onload = function() {
-            document.getElementById('codeInput').value = `import telebot
-# Replace with your actual bot token
-TOKEN = 'YOUR_BOT_TOKEN_HERE'
-bot = telebot.TeleBot(TOKEN)
+      } else {
+        fallbackCopy(text);
+      }
+    }
 
-@bot.message_handler(func=lambda message: True)
-def save_message_to_file(message):
-    if message.text:
-        try:
-            with open("message.txt", "w", encoding="utf-8") as file:
-                file.write(message.text)
-            bot.send_message(message.chat.id, "Message saved to file.")
-        except Exception as e:
-            bot.send_message(message.chat.id, f"Error saving message: {str(e)}")
-    else:
-        bot.send_message(message.chat.id, "Only text messages are supported.")
+    function fallbackCopy(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      showToast();
+    }
 
-if __name__ == "__main__":
-    print("Bot is running...")
-    bot.infinity_polling()`;
-            
-            document.getElementById('pathInput').value = 'C:\\Users\\Admin\\Downloads\\telegram_bot.py';
-            generateCommand();
-        };
-    </script>
+    function showToast() {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+
+    function clearAll() {
+      document.getElementById('code').value = '';
+      document.getElementById('path').value = '';
+      document.getElementById('output').textContent = 'CMD command will appear here...';
+      generateCommand();
+    }
+  </script>
+
 </body>
 </html>
