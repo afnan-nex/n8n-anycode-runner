@@ -198,14 +198,38 @@
 
         // Function to escape special CMD characters
         function escapeForCmd(text) {
-            // Escape special CMD characters: & < > | ^ %
-            return text
-                .replace(/\^/g, '^^')  // ^ must be escaped first
-                .replace(/&/g, '^&')
-                .replace(/</g, '^<')
-                .replace(/>/g, '^>')
-                .replace(/\|/g, '^|')
-                .replace(/%/g, '%%');
+            // For empty lines, return empty string (will be handled as echo. later)
+            if (text.trim() === '') {
+                return '';
+            }
+            
+            // Replace problematic characters step by step
+            let escaped = text;
+            
+            // First, escape the caret character by doubling it
+            escaped = escaped.replace(/\^/g, '^^');
+            
+            // Escape ampersand
+            escaped = escaped.replace(/&/g, '^&');
+            
+            // Escape pipe
+            escaped = escaped.replace(/\|/g, '^|');
+            
+            // Escape less than and greater than
+            escaped = escaped.replace(/</g, '^<');
+            escaped = escaped.replace(/>/g, '^>');
+            
+            // Escape percent by doubling it
+            escaped = escaped.replace(/%/g, '%%');
+            
+            // Handle quotes - this is the tricky part
+            // For lines containing quotes, we need to be very careful
+            if (escaped.includes('"')) {
+                // Escape quotes by doubling them, but only if they're not already escaped
+                escaped = escaped.replace(/"/g, '""');
+            }
+            
+            return escaped;
         }
 
         // Add event listeners for auto-update on input changes
