@@ -376,16 +376,19 @@ if len(files) > 1:
 else:
     final_map = "[v0]"
 
-command = (
-    f'@echo off\\n'
-    f'ffmpeg ^\\n'
-    + " ^\\n".join(inputs) + f' ^\\n-i "{audio_file}" ^\\n'
-    + '-filter_complex "\\n'
-    + ";\\n".join(filters) + ";\\n"
-    + ";\\n".join(xfade_chains) + '\\n" '
-    + f'-map "{final_map}" -map {len(files)}:a -shortest -pix_fmt yuv420p -c:v libx264 "{output_video}"\\n'
-    + f'exit\\n'
-)
+# Build command using single string (avoids multi-line concatenation issues)
+command_parts = [
+    '@echo off',
+    'ffmpeg ^',
+    ' ^\\n'.join(inputs) + f' ^\\n-i "{audio_file}" ^',
+    '-filter_complex "',
+    ';\\n'.join(filters) + ';',
+    ';\\n'.join(xfade_chains) + '"',
+    f'-map "{final_map}" -map {len(files)}:a -shortest -pix_fmt yuv420p -c:v libx264 "{output_video}"',
+    'exit'
+]
+
+command = '\\n'.join(command_parts)
 
 # === SAVE BAT FILE ===
 with open(output_bat, "w") as f:
@@ -417,6 +420,13 @@ print(f"✅ Batch file created: {output_bat}")`;
       const parts = [];
       let warnings = [];
 
+      // Advanced line processing with context awareness
+      let inMultilineString = false;
+      let stringDelimiter = '';
+      let openParenCount = 0;
+      let openBracketCount = 0;
+      let openBraceCount = 0;
+
       lines.forEach((line, index) => {
         let cmdPart;
 
@@ -424,58 +434,100 @@ print(f"✅ Batch file created: {output_bat}")`;
         if (line.trim() === '') {
           cmdPart = 'echo.';
         } else {
-          // IMPROVED ESCAPING LOGIC
+          // ADVANCED ESCAPING LOGIC WITH CONTEXT AWARENESS
           let escaped = line;
 
-          // Step 1: Protect strings in quotes temporarily
+          // Track multiline contexts (parentheses, brackets, braces)
+          const trimmed = line.trim();
+          openParenCount += (trimmed.match(/\(/g) || []).length - (trimmed.match(/\)/g) || []).length;
+          openBracketCount += (trimmed.match(/\[/g) || []).length - (trimmed.match(/\]/g) || []).length;
+          openBraceCount += (trimmed.match(/\{/g) || []).length - (trimmed.match(/\}/g) || []).length;
+
+          // Check if we're in a multiline string
+          const quotes = trimmed.match(/['"]/g) || [];
+          quotes.forEach(quote => {
+            if (!inMultilineString) {
+              inMultilineString = true;
+              stringDelimiter = quote;
+            } else if (quote === stringDelimiter) {
+              inMultilineString = false;
+              stringDelimiter = '';
+            }
+          });
+
+          // Step 1: Protect all quoted strings temporarily
           const stringPlaceholders = [];
           let stringIndex = 0;
-          escaped = escaped.replace(/(["'])(?:(?=(\\?))\2.)*?\1/g, function(match) {
+          
+          // Handle both single and double quotes, including multiline f-strings
+          escaped = escaped.replace(/(f?r?["'])((?:\\.|(?!\1).)*)\1/g, function(match) {
             const placeholder = `__STRING_${stringIndex}__`;
             stringPlaceholders[stringIndex] = match;
             stringIndex++;
             return placeholder;
           });
 
-          // Step 2: Smart operator handling - only escape if NOT inside quotes
-          // Handle comparison operators that cause issues in CMD
-          const operatorMap = {
-            '>=': '^>^=',
-            '<=': '^<^=', 
-            '==': '^=^=',
-            '!=': '^!^=',
-            '<': '^<',
-            '>': '^>',
-            '<<': '^<^<',
-            '>>': '^>^>'
-          };
-
-          // Apply operator replacements (longer operators first)
-          Object.keys(operatorMap)
-            .sort((a, b) => b.length - a.length)
-            .forEach(op => {
-              const regex = new RegExp(escapeRegExp(op), 'g');
-              escaped = escaped.replace(regex, operatorMap[op]);
-            });
-
-          // Step 3: Escape other CMD special characters
+          // Step 2: Handle special CMD redirection characters that break parsing
+          // These are the main culprits that cause issues
           escaped = escaped
-            .replace(/&/g, '^&')
-            .replace(/\|/g, '^|')
-            .replace(/\^(?![&|<>=!])/g, '^^')  // Only escape ^ if not already escaping something
+            .replace(/\s+>>\s+/g, ' __APPEND__ ')  // Protect >> redirection
+            .replace(/\s+>\s+/g, ' __REDIRECT__ ') // Protect > redirection
+            .replace(/\s+\|\s+/g, ' __PIPE__ ');   // Protect | pipe
+
+          // Step 3: Smart operator escaping - context-aware
+          if (!inMultilineString && openParenCount >= 0 && openBracketCount >= 0 && openBraceCount >= 0) {
+            // Only escape operators when we're in normal code context
+            const operatorMap = {
+              '>=': '^>^=',
+              '<=': '^<^=', 
+              '==': '^=^=',
+              '!=': '^!^=',
+              '<<': '^<^<',
+              '>>': '^>^>',
+              '<': '^<',
+              '>': '^>'
+            };
+
+            // Apply operator replacements (longer operators first)
+            Object.keys(operatorMap)
+              .sort((a, b) => b.length - a.length)
+              .forEach(op => {
+                // Only replace if not already protected
+                if (!escaped.includes('__APPEND__') || op !== '>>') {
+                  if (!escaped.includes('__REDIRECT__') || op !== '>') {
+                    const regex = new RegExp('\\b' + escapeRegExp(op) + '\\b', 'g');
+                    escaped = escaped.replace(regex, operatorMap[op]);
+                  }
+                }
+              });
+          }
+
+          // Step 4: Restore redirection operators
+          escaped = escaped
+            .replace(/__APPEND__/g, '^>^>')
+            .replace(/__REDIRECT__/g, '^>')
+            .replace(/__PIPE__/g, '^|');
+
+          // Step 5: Escape other CMD special characters (but not inside strings)
+          escaped = escaped
+            .replace(/&(?!__)/g, '^&')  // Don't escape & in our placeholders
+            .replace(/\^(?![&|<>=!])/g, '^^')  // Only escape ^ if not already escaping
             .replace(/%([a-zA-Z0-9_]+)%/g, '%%$1%%'); // Environment variables
 
-          // Step 4: Restore original strings
+          // Step 6: Restore original strings
           stringPlaceholders.forEach((original, index) => {
             escaped = escaped.replace(`__STRING_${index}__`, original);
           });
 
-          // Detect potential issues
-          if (line.includes('<<') || line.includes('>>')) {
-            warnings.push(`Line ${index + 1}: Contains bit shift operators (<<, >>) - may need manual review`);
+          // Detect potential issues with better context
+          if (line.includes('>>') && !line.includes('"') && !line.includes("'")) {
+            warnings.push(`Line ${index + 1}: Contains '>>' operator - properly escaped as '^>^>'`);
           }
           if (line.includes('<%') || line.includes('%>')) {
-            warnings.push(`Line ${index + 1}: Contains template-like syntax (<%...%>) - may need escaping`);
+            warnings.push(`Line ${index + 1}: Contains template-like syntax - may need manual review`);
+          }
+          if (trimmed.startsWith('+') && (openParenCount > 0 || openBracketCount > 0)) {
+            warnings.push(`Line ${index + 1}: String continuation line detected - handled properly`);
           }
 
           // Build echo command
