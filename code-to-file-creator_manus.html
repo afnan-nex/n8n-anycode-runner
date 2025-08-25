@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code to Any File Creator by CMD</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 800px;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+            color: #fff;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        textarea,
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9em;
+            resize: vertical;
+        }
+        textarea {
+            min-height: 150px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            flex-grow: 1; /* Allow buttons to grow and fill space */
+            min-width: 120px; /* Ensure buttons don't get too small */
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #outputCmd {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9em;
+            min-height: 100px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            cursor: text;
+        }
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-size: 17px;
+            opacity: 0;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+        .toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .button-group {
+                flex-direction: column; /* Stack buttons vertically on small screens */
+            }
+            button {
+                width: 100%; /* Full width buttons */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Code to Any File Creator by CMD</h1>
+
+        <div class="form-group">
+            <label for="codeSnippet">Code Snippet:</label>
+            <textarea id="codeSnippet" placeholder="Paste your code here (Python, JavaScript, CMD, etc.)"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="filePath">File Path (e.g., C:\scripts\app.py):</label>
+            <input type="text" id="filePath" placeholder="Enter the full file path">
+        </div>
+
+        <div class="button-group">
+            <button id="generateCmdBtn">Generate CMD Command</button>
+            <button id="clearAllBtn">Clear All</button>
+            <button id="copyCmdBtn">Copy CMD Command</button>
+        </div>
+
+        <div class="form-group">
+            <label for="outputCmd">Generated CMD Command:</label>
+            <pre id="outputCmd"></pre>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // Get references to HTML elements
+        const codeSnippetTextarea = document.getElementById('codeSnippet');
+        const filePathInput = document.getElementById('filePath');
+        const outputCmdPre = document.getElementById('outputCmd');
+        const generateCmdBtn = document.getElementById('generateCmdBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const copyCmdBtn = document.getElementById('copyCmdBtn');
+        const toast = document.getElementById('toast');
+
+        // Function to generate CMD command
+        function generateCmdCommand() {
+            const codeSnippet = codeSnippetTextarea.value;
+            const filePath = filePathInput.value.trim();
+
+            if (!codeSnippet || !filePath) {
+                outputCmdPre.textContent = 'Please enter both code snippet and file path.';
+                return;
+            }
+
+            const lines = codeSnippet.split('\n');
+            const cmdCommands = [];
+
+            lines.forEach((line, index) => {
+                if (index === 0) {
+                    // First line uses > (overwrite)
+                    if (line.trim() === '') {
+                        cmdCommands.push(`echo. > "${filePath}"`);
+                    } else {
+                        cmdCommands.push(`echo ${escapeForCmd(line)} > "${filePath}"`);
+                    }
+                } else {
+                    // Subsequent lines use >> (append)
+                    if (line.trim() === '') {
+                        cmdCommands.push(`echo. >> "${filePath}"`);
+                    } else {
+                        cmdCommands.push(`echo ${escapeForCmd(line)} >> "${filePath}"`);
+                    }
+                }
+            });
+
+            // Join all commands with & for sequential execution
+            const fullCommand = cmdCommands.join(' & ');
+            outputCmdPre.textContent = fullCommand;
+        }
+
+        // Function to escape special CMD characters
+        function escapeForCmd(text) {
+            // Escape special CMD characters: & < > | ^ %
+            return text
+                .replace(/\^/g, '^^')  // ^ must be escaped first
+                .replace(/&/g, '^&')
+                .replace(/</g, '^<')
+                .replace(/>/g, '^>')
+                .replace(/\|/g, '^|')
+                .replace(/%/g, '%%');
+        }
+
+        // Add event listeners for auto-update on input changes
+        codeSnippetTextarea.addEventListener('input', generateCmdCommand);
+        filePathInput.addEventListener('input', generateCmdCommand);
+
+        // Function to load example on page load
+        function loadExample() {
+            const exampleCode = `import os
+import subprocess
+from moviepy.editor import VideoFileClip
+
+def get_video_duration(video_path):
+    """Get the duration of a video file in seconds."""
+    try:
+        clip = VideoFileClip(video_path)
+        duration = clip.duration
+        clip.close()
+        return duration
+    except Exception as e:
+        print(f"Error getting duration for {video_path}: {e}")
+        return None
+
+def main():
+    video_folder = "C:\\YouTube\\videos"
+    
+    if not os.path.exists(video_folder):
+        print(f"Folder {video_folder} does not exist.")
+        return
+    
+    for filename in os.listdir(video_folder):
+        if filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
+            video_path = os.path.join(video_folder, filename)
+            duration = get_video_duration(video_path)
+            
+            if duration:
+                minutes = int(duration // 60)
+                seconds = int(duration % 60)
+                print(f"{filename}: {minutes}m {seconds}s")
+
+if __name__ == "__main__":
+    main()`;
+            
+            const examplePath = "C:\\YouTube\\get_duration.py";
+            
+            codeSnippetTextarea.value = exampleCode;
+            filePathInput.value = examplePath;
+            generateCmdCommand();
+        }
+
+        // Function to clear all inputs and output
+        function clearAll() {
+            codeSnippetTextarea.value = '';
+            filePathInput.value = '';
+            outputCmdPre.textContent = '';
+        }
+
+        // Function to copy CMD command to clipboard
+        function copyToClipboard() {
+            const cmdText = outputCmdPre.textContent;
+            
+            if (!cmdText || cmdText === 'Please enter both code snippet and file path.') {
+                showToast('Nothing to copy. Please generate a CMD command first.');
+                return;
+            }
+
+            // Use the modern Clipboard API
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(cmdText).then(() => {
+                    showToast('Copied to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    fallbackCopyTextToClipboard(cmdText);
+                });
+            } else {
+                // Fallback for older browsers
+                fallbackCopyTextToClipboard(cmdText);
+            }
+        }
+
+        // Fallback copy function for older browsers
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Avoid scrolling to bottom
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast('Copied to clipboard!');
+                } else {
+                    showToast('Failed to copy to clipboard.');
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                showToast('Failed to copy to clipboard.');
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        // Function to show toast notification
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            // Hide toast after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Function to handle keyboard shortcuts
+        function handleKeyboardShortcuts(event) {
+            // Ctrl + Enter: Generate command
+            if (event.ctrlKey && event.key === 'Enter') {
+                event.preventDefault();
+                generateCmdCommand();
+                showToast('CMD command generated!');
+            }
+            
+            // Ctrl + C when focused on output: Copy command
+            if (event.ctrlKey && event.key === 'c' && event.target === outputCmdPre) {
+                event.preventDefault();
+                copyToClipboard();
+            }
+        }
+
+        // Add event listeners for buttons
+        generateCmdBtn.addEventListener('click', generateCmdCommand);
+        clearAllBtn.addEventListener('click', clearAll);
+        copyCmdBtn.addEventListener('click', copyToClipboard);
+
+        // Add keyboard shortcut listeners
+        document.addEventListener('keydown', handleKeyboardShortcuts);
+        outputCmdPre.addEventListener('keydown', handleKeyboardShortcuts);
+
+        // Load example on page load
+        window.addEventListener('load', loadExample);
+    </script>
+</body>
+</html>
+
+
