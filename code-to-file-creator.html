@@ -11,6 +11,7 @@
       --light: #f8f9fa;
       --gray: #d1d5db;
       --success: #4ade80;
+      --warning: #f59e0b;
     }
 
     * {
@@ -28,7 +29,7 @@
     }
 
     .container {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 0 auto;
       background: white;
       border-radius: 16px;
@@ -99,6 +100,8 @@
       white-space: pre-wrap;
       word-break: break-all;
       min-height: 80px;
+      max-height: 400px;
+      overflow-y: auto;
     }
 
     .copy-btn {
@@ -114,6 +117,7 @@
       cursor: pointer;
       opacity: 0.9;
       transition: opacity 0.3s, background 0.3s;
+      z-index: 10;
     }
 
     .copy-btn:hover {
@@ -153,6 +157,21 @@
       background: #ef4444;
     }
 
+    .warning-box {
+      background: #fef3cd;
+      border: 1px solid var(--warning);
+      color: #856404;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .warning-box.show {
+      display: block;
+    }
+
     .toast {
       position: fixed;
       bottom: 20px;
@@ -173,6 +192,29 @@
       opacity: 1;
     }
 
+    .tips {
+      background: #f0f9ff;
+      border: 1px solid #0ea5e9;
+      color: #0c4a6e;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+    }
+
+    .tips h4 {
+      margin-bottom: 8px;
+      color: #0c4a6e;
+    }
+
+    .tips ul {
+      margin-left: 20px;
+    }
+
+    .tips li {
+      margin-bottom: 4px;
+    }
+
     @media (max-width: 600px) {
       .btn-group {
         flex-direction: column;
@@ -187,9 +229,24 @@
 
   <div class="container">
     <header>
-      <h1>Code to Any File Creator by CMD</h1>
-      <p>Paste your code and file path to generate a CMD command for n8n automation.</p>
+      <h1>🚀 Code to CMD File Creator</h1>
+      <p>Smart CMD generator with proper escaping for Python, JS, and any code.</p>
     </header>
+
+    <div class="tips">
+      <h4>✨ Smart Features:</h4>
+      <ul>
+        <li>Auto-detects and fixes comparison operators (>, <, >=, <=, ==, !=)</li>
+        <li>Properly escapes special characters (&, |, %, ^)</li>
+        <li>Handles environment variables (%VAR%)</li>
+        <li>Works with any programming language</li>
+      </ul>
+    </div>
+
+    <div class="warning-box" id="warningBox">
+      <strong>⚠️ Potential Issues Detected:</strong>
+      <div id="warningText"></div>
+    </div>
 
     <div class="form-group">
       <label for="code">Code Snippet</label>
@@ -204,14 +261,14 @@
     <div class="form-group">
       <label for="output">Generated CMD Command</label>
       <div class="output-container">
-        <button class="copy-btn" onclick="copyCommand()">Copy</button>
+        <button class="copy-btn" onclick="copyCommand()">📋 Copy</button>
         <div id="output">CMD command will appear here...</div>
       </div>
     </div>
 
     <div class="btn-group">
-      <button onclick="generateCommand()">Generate CMD Command</button>
-      <button class="clear-btn" onclick="clearAll()">Clear All</button>
+      <button onclick="generateCommand()">🔧 Generate CMD Command</button>
+      <button class="clear-btn" onclick="clearAll()">🗑️ Clear All</button>
     </div>
   </div>
 
@@ -246,33 +303,97 @@
 
     // Load example on page load
     window.onload = function() {
-      document.getElementById('code').value = `from mutagen.mp3 import MP3
-import os
+      document.getElementById('code').value = `import re
 
-# Path to your audio file
-audio_path = r"C:/YouTube/audio.mp3"
+# === SETTINGS ===
+ffmpegready_file = r"C:\\YouTube\\ffmpegready.txt"
+output_bat = r"C:\\YouTube\\make_video.bat"
+output_video = r"C:\\Users\\admin\\Downloads\\good.mp4"
+audio_file = r"C:\\YouTube\\audio.mp3"
 
-# Load the audio file
-audio = MP3(audio_path)
+fps = 30  # frames per second
+zoom_speed = "0.0015"  # how fast zoom increases
+fade_duration = 0.5    # seconds (crossfade overlap)
 
-# Get duration in seconds
-duration_seconds = int(audio.info.length)
+# === READ INPUT FILE ===
+with open(ffmpegready_file, "r") as f:
+    lines = f.readlines()
 
-# Convert into minutes:seconds format
-minutes = duration_seconds // 60
-seconds = duration_seconds % 60
-duration_text = f"{minutes}:{seconds:02d}"
+files = []
+durations = []
+for i in range(0, len(lines), 2):
+    img_line = lines[i].strip()
+    dur_line = lines[i+1].strip() if i+1 < len(lines) else None
 
-# Path for the text file (same directory as audio file)
-output_path = os.path.join(os.path.dirname(audio_path), "audioduration.txt")
+    match = re.match(r"file '(.+)'", img_line)
+    if not match:
+        continue
+    img_file = match.group(1)
 
-# Write duration to text file
-with open(output_path, "w") as f:
-    f.write(duration_text)
+    dur = None
+    if dur_line and dur_line.startswith("duration"):
+        dur = float(dur_line.split()[1])
 
-print(f"Audio duration saved to {output_path}")`;
+    files.append(img_file)
+    durations.append(dur)
 
-      document.getElementById('path').value = 'C:\\YouTube\\get_duration.py';
+# === BUILD FFMPEG COMMAND ===
+inputs = []
+filters = []
+xfade_chains = []
+
+# Input section
+for i, (img, dur) in enumerate(zip(files, durations)):
+    if dur is None:
+        dur = durations[-2]  # fallback for last image
+
+    inputs.append(f'-loop 1 -t {dur:.2f} -i "{img}"')
+
+    # frames = duration * fps
+    frames = int(dur * fps)
+    filters.append(
+        f'[{i}:v]zoompan=z=\\'min(zoom+{zoom_speed},1.5)\\':d={frames}:s=1280x720,format=yuv420p[v{i}]'
+    )
+
+# Xfade chain
+for i in range(len(files)-1):
+    if i == 0:
+        left = f"[v0]"
+    else:
+        left = f"[xf{i-1}]"
+
+    right = f"[v{i+1}]"
+    out = f"[xf{i}]"
+
+    offset = sum(durations[:i+1]) - fade_duration
+    xfade_chains.append(
+        f'{left}{right}xfade=transition=fade:duration={fade_duration}:offset={offset:.2f}{out}'
+    )
+
+# Fix: proper inline if/else expression
+if len(files) > 1:
+    final_map = f"[xf{len(files)-2}]"
+else:
+    final_map = "[v0]"
+
+command = (
+    f'@echo off\\n'
+    f'ffmpeg ^\\n'
+    + " ^\\n".join(inputs) + f' ^\\n-i "{audio_file}" ^\\n'
+    + '-filter_complex "\\n'
+    + ";\\n".join(filters) + ";\\n"
+    + ";\\n".join(xfade_chains) + '\\n" '
+    + f'-map "{final_map}" -map {len(files)}:a -shortest -pix_fmt yuv420p -c:v libx264 "{output_video}"\\n'
+    + f'exit\\n'
+)
+
+# === SAVE BAT FILE ===
+with open(output_bat, "w") as f:
+    f.write(command)
+
+print(f"✅ Batch file created: {output_bat}")`;
+
+      document.getElementById('path').value = 'C:\\YouTube\\ffmpeg_command.py';
       generateCommand();
     };
 
@@ -280,9 +401,12 @@ print(f"Audio duration saved to {output_path}")`;
       const code = document.getElementById('code').value;
       const rawPath = document.getElementById('path').value.trim();
       const outputEl = document.getElementById('output');
+      const warningBox = document.getElementById('warningBox');
+      const warningText = document.getElementById('warningText');
 
       if (!code || !rawPath) {
         outputEl.textContent = 'Enter code and file path to generate command...';
+        warningBox.classList.remove('show');
         return;
       }
 
@@ -291,6 +415,7 @@ print(f"Audio duration saved to {output_path}")`;
 
       const lines = code.split('\n');
       const parts = [];
+      let warnings = [];
 
       lines.forEach((line, index) => {
         let cmdPart;
@@ -299,16 +424,59 @@ print(f"Audio duration saved to {output_path}")`;
         if (line.trim() === '') {
           cmdPart = 'echo.';
         } else {
-          // Step 1: Escape %VAR% style environment variables only
-          let escaped = line.replace(/%([a-zA-Z0-9_]+)%/g, '%%$1%%');
+          // IMPROVED ESCAPING LOGIC
+          let escaped = line;
 
-          // Step 2: Escape other CMD special characters
+          // Step 1: Protect strings in quotes temporarily
+          const stringPlaceholders = [];
+          let stringIndex = 0;
+          escaped = escaped.replace(/(["'])(?:(?=(\\?))\2.)*?\1/g, function(match) {
+            const placeholder = `__STRING_${stringIndex}__`;
+            stringPlaceholders[stringIndex] = match;
+            stringIndex++;
+            return placeholder;
+          });
+
+          // Step 2: Smart operator handling - only escape if NOT inside quotes
+          // Handle comparison operators that cause issues in CMD
+          const operatorMap = {
+            '>=': '^>^=',
+            '<=': '^<^=', 
+            '==': '^=^=',
+            '!=': '^!^=',
+            '<': '^<',
+            '>': '^>',
+            '<<': '^<^<',
+            '>>': '^>^>'
+          };
+
+          // Apply operator replacements (longer operators first)
+          Object.keys(operatorMap)
+            .sort((a, b) => b.length - a.length)
+            .forEach(op => {
+              const regex = new RegExp(escapeRegExp(op), 'g');
+              escaped = escaped.replace(regex, operatorMap[op]);
+            });
+
+          // Step 3: Escape other CMD special characters
           escaped = escaped
             .replace(/&/g, '^&')
-            .replace(/</g, '^<')
-            .replace(/>/g, '^>')
             .replace(/\|/g, '^|')
-            .replace(/\^/g, '^^');
+            .replace(/\^(?![&|<>=!])/g, '^^')  // Only escape ^ if not already escaping something
+            .replace(/%([a-zA-Z0-9_]+)%/g, '%%$1%%'); // Environment variables
+
+          // Step 4: Restore original strings
+          stringPlaceholders.forEach((original, index) => {
+            escaped = escaped.replace(`__STRING_${index}__`, original);
+          });
+
+          // Detect potential issues
+          if (line.includes('<<') || line.includes('>>')) {
+            warnings.push(`Line ${index + 1}: Contains bit shift operators (<<, >>) - may need manual review`);
+          }
+          if (line.includes('<%') || line.includes('%>')) {
+            warnings.push(`Line ${index + 1}: Contains template-like syntax (<%...%>) - may need escaping`);
+          }
 
           // Build echo command
           cmdPart = `echo ${escaped}`;
@@ -319,9 +487,22 @@ print(f"Audio duration saved to {output_path}")`;
         parts.push(cmdPart);
       });
 
-      // Join all with ` & ` (not &&) for sequential execution
+      // Show warnings if any
+      if (warnings.length > 0) {
+        warningText.innerHTML = warnings.join('<br>');
+        warningBox.classList.add('show');
+      } else {
+        warningBox.classList.remove('show');
+      }
+
+      // Join all with ` & ` for sequential execution
       const finalCommand = parts.join(' & ');
       outputEl.textContent = finalCommand;
+    }
+
+    // Helper function to escape regex special characters
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
     function copyCommand() {
@@ -330,10 +511,10 @@ print(f"Audio duration saved to {output_path}")`;
 
       if (!text || text.includes('Enter code')) return;
 
-      // Use modern Clipboard API if available (more reliable)
+      // Use modern Clipboard API if available
       if (navigator.clipboard) {
         navigator.clipboard.writeText(text).then(() => {
-          showToast();
+          showToast('Copied to clipboard! 📋');
         }).catch(err => {
           fallbackCopy(text);
         });
@@ -351,11 +532,12 @@ print(f"Audio duration saved to {output_path}")`;
       textarea.select();
       document.execCommand('copy');
       document.body.removeChild(textarea);
-      showToast();
+      showToast('Copied to clipboard! 📋');
     }
 
-    function showToast() {
+    function showToast(message = 'Copied to clipboard!') {
       const toast = document.getElementById('toast');
+      toast.textContent = message;
       toast.classList.add('show');
       setTimeout(() => {
         toast.classList.remove('show');
@@ -366,6 +548,7 @@ print(f"Audio duration saved to {output_path}")`;
       document.getElementById('code').value = '';
       document.getElementById('path').value = '';
       document.getElementById('output').textContent = 'CMD command will appear here...';
+      document.getElementById('warningBox').classList.remove('show');
       generateCommand();
     }
   </script>
